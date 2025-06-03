@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie Recommender System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --navy: #0a192f;
+            --navy-light: #172a45;
+            --navy-lighter: #233554;
+            --white: #ffffff;
+            --off-white: #f8f9fa;
+            --gray-light: #e6e8eb;
+            --gray: #8892b0;
+            --gray-dark: #495670;
+            --accent: #64ffda;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--navy);
+            min-height: 100vh;
+            color: var(--white);
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: var(--navy-light);
+            padding: 40px;
+            border-radius: 4px;
+            margin-bottom: 30px;
+            text-align: center;
+            border: 1px solid var(--navy-lighter);
+        }
+        
+        h1 {
+            font-size: 2.5em;
+            font-weight: 700;
+            margin-bottom: 10px;
+            letter-spacing: -1px;
+        }
+        
+        .subtitle {
+            color: var(--gray);
+            font-size: 1.1em;
+            font-weight: 300;
+        }
+        
+        .tabs {
+            display: flex;
+            background: var(--navy-light);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 30px;
+            border: 1px solid var(--navy-lighter);
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            background: transparent;
+            transition: all 0.2s;
+            font-weight: 500;
+            color: var(--gray);
+            position: relative;
+            border-right: 1px solid var(--navy-lighter);
+        }
+        
+        .tab:last-child {
+            border-right: none;
+        }
+        
+        .tab:hover {
+            background: var(--navy-lighter);
+            color: var(--white);
+        }
+        
+        .tab.active {
+            color: var(--white);
+            background: var(--navy-lighter);
+        }
+        
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--white);
+        }
+        
+        .content {
+            background: var(--navy-light);
+            padding: 40px;
+            border-radius: 4px;
+            border: 1px solid var(--navy-lighter);
+            min-height: 400px;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 500;
+            color: var(--white);
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--navy-lighter);
+            border-radius: 4px;
+            font-size: 16px;
+            transition: all 0.2s;
+            background: var(--navy);
+            color: var(--white);
+            font-family: inherit;
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--white);
+            background: var(--navy-lighter);
+        }
+        
+        input::placeholder {
+            color: var(--gray-dark);
+        }
+        
+        select option {
+            background: var(--navy);
+        }
+        
+        .button {
+            background: var(--white);
+            color: var(--navy);
+            padding: 14px 30px;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .button:hover {
+            background: var(--off-white);
+            transform: translateY(-1px);
+        }
+        
+        .button:active {
+            transform: translateY(0);
+        }
+        
+        .results {
+            margin-top: 40px;
+        }
+        
+        .results h3 {
+            margin-bottom: 20px;
+            font-size: 1.3em;
+            font-weight: 600;
+        }
+        
+        .movie-card {
+            background: var(--navy);
+            padding: 20px;
+            margin: 12px 0;
+            border-radius: 4px;
+            border: 1px solid var(--navy-lighter);
+            transition: all 0.2s;
+            position: relative;
+        }
+        
+        .movie-card:hover {
+            border-color: var(--white);
+            transform: translateX(4px);
+        }
+        
+        .movie-title {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: var(--white);
+            margin-bottom: 8px;
+        }
+        
+        .movie-genres {
+            color: var(--gray);
+            font-size: 0.9em;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 60px;
+            color: var(--gray);
+        }
+        
+        .spinner {
+            border: 2px solid var(--navy-lighter);
+            border-top: 2px solid var(--white);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .error {
+            background: rgba(255, 0, 0, 0.1);
+            color: #ff6b6b;
+            padding: 20px;
+            border-radius: 4px;
+            margin-top: 20px;
+            border: 1px solid rgba(255, 0, 0, 0.2);
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: var(--navy);
+            padding: 30px;
+            border-radius: 4px;
+            text-align: center;
+            border: 1px solid var(--navy-lighter);
+        }
+        
+        .stat-value {
+            font-size: 2.5em;
+            font-weight: 700;
+            margin-bottom: 5px;
+            color: var(--white);
+        }
+        
+        .stat-label {
+            color: var(--gray);
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .slider {
+            width: 100%;
+            height: 4px;
+            border-radius: 2px;
+            background: var(--navy-lighter);
+            outline: none;
+            -webkit-appearance: none;
+            margin: 10px 0;
+        }
+        
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--white);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+        
+        .slider::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--white);
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+        }
+        
+        .slider::-moz-range-thumb:hover {
+            transform: scale(1.2);
+        }
+        
+        .slider-value {
+            text-align: center;
+            color: var(--gray);
+            font-size: 0.9em;
+            margin-top: 10px;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .random-users {
+            margin-top: 20px;
+            padding: 20px;
+            background: var(--navy);
+            border-radius: 4px;
+            border: 1px solid var(--navy-lighter);
+        }
+        
+        .random-users h4 {
+            color: var(--white);
+            margin-bottom: 15px;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .user-chip {
+            display: inline-block;
+            padding: 6px 14px;
+            margin: 4px;
+            background: var(--navy-lighter);
+            border-radius: 4px;
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid var(--navy-lighter);
+            color: var(--gray);
+        }
+        
+        .user-chip:hover {
+            background: transparent;
+            color: var(--white);
+            border-color: var(--white);
+        }
+        
+        /* Subtle animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .movie-card {
+            animation: fadeIn 0.3s ease-out;
+        }
+        
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            header {
+                padding: 30px 20px;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+            
+            .content {
+                padding: 25px;
+            }
+            
+            .tabs {
+                flex-direction: column;
+            }
+            
+            .tab {
+                border-right: none;
+                border-bottom: 1px solid var(--navy-lighter);
+            }
+            
+            .tab:last-child {
+                border-bottom: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎬 Movie Recommender System</h1>
+            <p class="subtitle">Discover your next favorite movie with AI-powered recommendations</p>
+        </header>
+        
+        <div class="tabs">
+            <div class="tab active" onclick="showTab('recommend')">Get Recommendations</div>
+            <div class="tab" onclick="showTab('similar')">Find Similar Movies</div>
+            <div class="tab" onclick="showTab('stats')">User Statistics</div>
+        </div>
+        
+        <div class="content">
+            <!-- Recommendations Tab -->
+            <div id="recommend-tab" class="tab-content">
+                <form id="recommend-form">
+                    <div class="form-group">
+                        <label for="user-id">User ID</label>
+                        <input type="number" id="user-id" placeholder="Enter user ID (e.g., 1)" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="method">Recommendation Method</label>
+                        <select id="method" onchange="toggleAlpha()">
+                            <option value="hybrid">Hybrid (Best of Both)</option>
+                            <option value="ncf">Neural Collaborative Filtering</option>
+                            <option value="content">Content-Based</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group" id="alpha-group">
+                        <label for="alpha">Balance (NCF vs Content)</label>
+                        <input type="range" id="alpha" min="0" max="1" step="0.1" value="0.6" class="slider">
+                        <div class="slider-value">0.6 (60% NCF, 40% Content)</div>
+                    </div>
+                    
+                    <button type="submit" class="button">Get Recommendations</button>
+                </form>
+                
+                <div class="random-users" id="random-users">
+                    <h4>Try these active users</h4>
+                    <div id="user-chips"></div>
+                </div>
+                
+                <div id="recommend-results" class="results"></div>
+            </div>
+            
+            <!-- Similar Movies Tab -->
+            <div id="similar-tab" class="tab-content hidden">
+                <form id="similar-form">
+                    <div class="form-group">
+                        <label for="movie-title">Movie Title</label>
+                        <input type="text" id="movie-title" placeholder="Enter movie title (e.g., Toy Story)" required>
+                    </div>
+                    
+                    <button type="submit" class="button">Find Similar Movies</button>
+                </form>
+                
+                <div id="similar-results" class="results"></div>
+            </div>
+            
+            <!-- User Stats Tab -->
+            <div id="stats-tab" class="tab-content hidden">
+                <form id="stats-form">
+                    <div class="form-group">
+                        <label for="stats-user-id">User ID</label>
+                        <input type="number" id="stats-user-id" placeholder="Enter user ID" required>
+                    </div>
+                    
+                    <button type="submit" class="button">Get User Statistics</button>
+                </form>
+                
+                <div id="stats-results" class="results"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Load random users on page load
+        window.addEventListener('load', loadRandomUsers);
+        
+        async function loadRandomUsers() {
+            try {
+                const response = await fetch('/api/random_users');
+                const data = await response.json();
+                
+                if (response.ok && data.users) {
+                    const chipsContainer = document.getElementById('user-chips');
+                    chipsContainer.innerHTML = data.users.map(userId => 
+                        `<span class="user-chip" onclick="setUserId(${userId})">${userId}</span>`
+                    ).join('');
+                }
+            } catch (error) {
+                console.error('Failed to load random users:', error);
+            }
+        }
+        
+        function setUserId(userId) {
+            document.getElementById('user-id').value = userId;
+            document.getElementById('stats-user-id').value = userId;
+        }
+        
+        // Tab switching
+        function showTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.add('hidden');
+            });
+            
+            // Show selected tab
+            document.getElementById(`${tabName}-tab`).classList.remove('hidden');
+            
+            // Update active tab styling
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+        }
+        
+        // Toggle alpha slider visibility
+        function toggleAlpha() {
+            const method = document.getElementById('method').value;
+            const alphaGroup = document.getElementById('alpha-group');
+            
+            if (method === 'hybrid') {
+                alphaGroup.style.display = 'block';
+            } else {
+                alphaGroup.style.display = 'none';
+            }
+        }
+        
+        // Update alpha slider value display
+        document.getElementById('alpha').addEventListener('input', function(e) {
+            const value = e.target.value;
+            const ncf = Math.round(value * 100);
+            const content = 100 - ncf;
+            document.querySelector('.slider-value').textContent = 
+                `${value} (${ncf}% NCF, ${content}% Content)`;
+        });
+        
+        // Recommendations form
+        document.getElementById('recommend-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const userId = document.getElementById('user-id').value;
+            const method = document.getElementById('method').value;
+            const alpha = document.getElementById('alpha').value;
+            
+            const resultsDiv = document.getElementById('recommend-results');
+            resultsDiv.innerHTML = '<div class="loading"><div class="spinner"></div>Loading recommendations...</div>';
+            
+            try {
+                const response = await fetch('/api/recommend', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        user_id: userId,
+                        method: method,
+                        alpha: alpha
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    displayRecommendations(data.recommendations, resultsDiv);
+                } else {
+                    resultsDiv.innerHTML = `<div class="error">Error: ${data.error}</div>`;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+            }
+        });
+        
+        // Similar movies form
+        document.getElementById('similar-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const movieTitle = document.getElementById('movie-title').value;
+            const resultsDiv = document.getElementById('similar-results');
+            resultsDiv.innerHTML = '<div class="loading"><div class="spinner"></div>Finding similar movies...</div>';
+            
+            try {
+                const response = await fetch('/api/similar', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({movie_title: movieTitle})
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    displaySimilarMovies(data, resultsDiv);
+                } else {
+                    resultsDiv.innerHTML = `<div class="error">Error: ${data.error}</div>`;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+            }
+        });
+        
+        // User stats form
+        document.getElementById('stats-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const userId = document.getElementById('stats-user-id').value;
+            const resultsDiv = document.getElementById('stats-results');
+            resultsDiv.innerHTML = '<div class="loading"><div class="spinner"></div>Loading user statistics...</div>';
+            
+            try {
+                const response = await fetch(`/api/user_stats/${userId}`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    displayUserStats(data, resultsDiv);
+                } else {
+                    resultsDiv.innerHTML = `<div class="error">Error: ${data.error}</div>`;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+            }
+        });
+        
+        // Display functions
+        function displayRecommendations(recommendations, container) {
+            let html = '<h3>Recommended Movies</h3>';
+            
+            if (recommendations.length === 0) {
+                html += '<p style="color: var(--gray);">No recommendations found. Try a different method or user.</p>';
+            } else {
+                recommendations.forEach((movie, index) => {
+                    html += `
+                        <div class="movie-card" style="animation-delay: ${index * 0.05}s">
+                            <div class="movie-title">${index + 1}. ${movie.title}</div>
+                            <div class="movie-genres">Genres: ${movie.genres}</div>
+                        </div>
+                    `;
+                });
+            }
+            
+            container.innerHTML = html;
+        }
+        
+        function displaySimilarMovies(data, container) {
+            let html = `<h3>Movies similar to "${data.query_movie}"</h3>`;
+            
+            data.similar_movies.forEach((movie, index) => {
+                html += `
+                    <div class="movie-card" style="animation-delay: ${index * 0.05}s">
+                        <div class="movie-title">${index + 1}. ${movie.title}</div>
+                        <div class="movie-genres">Genres: ${movie.genres}</div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        function displayUserStats(stats, container) {
+            let html = `
+                <h3>User ${stats.user_id} Statistics</h3>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value">${stats.total_ratings}</div>
+                        <div class="stat-label">Total Ratings</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${stats.average_rating}</div>
+                        <div class="stat-label">Average Rating</div>
+                    </div>
+                </div>
+                
+                <h4 style="margin-top: 30px; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 0.5px; font-size: 0.9em;">Top Rated Movies</h4>
+            `;
+            
+            stats.top_rated_movies.forEach((movie, index) => {
+                html += `
+                    <div class="movie-card" style="animation-delay: ${index * 0.05}s">
+                        <div class="movie-title">${movie.title} (${movie.rating}★)</div>
+                        <div class="movie-genres">Genres: ${movie.genres}</div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+    </script>
+</body>
+</html>
